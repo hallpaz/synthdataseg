@@ -92,6 +92,11 @@ class StratifiedClassSampler:
             self.instance_counts[class_id] += 1
             self.pixel_counts[class_id] += visible_pixels
 
+    def reset(self) -> None:
+        """Reset frequency tracking counts."""
+        self.instance_counts = {cid: 0 for cid in self.foreground_classes}
+        self.pixel_counts = {cid: 0 for cid in self.foreground_classes}
+
     def get_instance_distribution(self) -> Dict[int, int]:
         """Return copy of instance counts."""
         return dict(self.instance_counts)
@@ -118,18 +123,25 @@ class SyntheticCompositor:
         self.texture_config = texture_config or TextureConfig()
         self.rng = rng or np.random.default_rng()
         self.sampler = StratifiedClassSampler(self.registry)
+        self.bg_paths: List[Path] = []
         self.bg_files: List[Path] = []
         self._scan_bg_dir()
 
     def _scan_bg_dir(self) -> None:
         """Scan background directory for image files if specified."""
         if self.config.bg_dir:
-            bg_path = Path(self.config.bg_dir)
-            if bg_path.exists() and bg_path.is_dir():
-                valid_exts = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
-                self.bg_files = [p for p in bg_path.iterdir() if p.suffix.lower() in valid_exts]
+            bg_dir = Path(self.config.bg_dir)
+            if bg_dir.exists() and bg_dir.is_dir():
+                extensions = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
+                self.bg_paths = sorted(
+                    [p for p in Path(bg_dir).iterdir() if p.suffix.lower() in extensions],
+                    key=lambda p: p.name.lower()
+                )
+                self.bg_files = self.bg_paths
 
-    def generate_procedural_background(self, height: int, width: int) -> np.ndarray:
+    def generate_procedural_background(
+        self, height: int, width: int, rng: Optional[np.random.Generator] = None
+    ) -> np.ndarray:
         """
         Generate high quality procedural backdrop when no background images are provided.
 
@@ -137,14 +149,16 @@ class SyntheticCompositor:
           - Gradient studio backdrops
           - Subtle textured architectural surfaces / smooth noise
         """
-        noise = PerlinNoise2D(seed=int(self.rng.integers(1, 100000)))
+        if rng is None:
+            rng = self.rng
+        noise = PerlinNoise2D(seed=int(rng.integers(1, 100000)))
         ys = np.linspace(0.0, 1.0, height)
         xs = np.linspace(0.0, 1.0, width)
         x_grid, y_grid = np.meshgrid(xs, ys)
 
         # Style 1: Ambient Studio Gradient (smooth vignette / subtle wall)
-        col1 = self.rng.uniform(40, 120, size=3)
-        col2 = self.rng.uniform(160, 230, size=3)
+        col1 = rng.uniform(40, 120, size=3)
+        col2 = rng.uniform(160, 230, size=3)
         vignette = np.sqrt((x_grid - 0.5) ** 2 + (y_grid - 0.5) ** 2) * 1.4
         vignette = np.clip(vignette, 0.0, 1.0)[..., None]
 
@@ -153,13 +167,18 @@ class SyntheticCompositor:
         bg = (1.0 - vignette) * col2 + vignette * col1 + n[..., None]
         return np.clip(bg, 0, 255).astype(np.uint8)
 
-    def load_background(self, height: int, width: int) -> np.ndarray:
+    def load_background(
+        self, height: int, width: int, rng: Optional[np.random.Generator] = None
+    ) -> np.ndarray:
         """
         Load a random image from background directory or generate procedural backdrop.
         """
-        if self.bg_files:
+        if rng is None:
+            rng = self.rng
+
+        if self.bg_paths:
             try:
-                bg_path = self.bg_files[self.rng.integers(len(self.bg_files))]
+                bg_path = self.bg_paths[int(rng.integers(len(self.bg_paths)))]
                 with Image.open(bg_path) as img:
                     img = img.convert("RGB")
                     # Aspect ratio preserving crop and resize
@@ -168,16 +187,20 @@ class SyntheticCompositor:
                     nw, nh = int(round(iw * scale)), int(round(ih * scale))
                     img = img.resize((nw, nh), Image.Resampling.BILINEAR)
                     # Center crop or random crop
-                    x_off = self.rng.integers(0, nw - width + 1)
-                    y_off = self.rng.integers(0, nh - height + 1)
+                    x_off = int(rng.integers(0, nw - width + 1))
+                    y_off = int(rng.integers(0, nh - height + 1))
                     cropped = img.crop((x_off, y_off, x_off + width, y_off + height))
                     return np.array(cropped, dtype=np.uint8)
             except Exception:
                 pass  # Fall back to procedural background on read error
 
-        return self.generate_procedural_background(height, width)
+        return self.generate_procedural_background(height, width, rng=rng)
 
-    def render(self, rng: Optional[np.random.Generator] = None) -> CompositeResult:
+    def render(
+        self,
+        rng: Optional[np.random.Generator] = None,
+        track_history: bool = False,
+    ) -> CompositeResult:
         """
         Render a full composite image and corresponding segmentation mask.
 
@@ -192,7 +215,7 @@ class SyntheticCompositor:
             rng = self.rng
 
         height, width = self.config.image_size
-        canvas_rgb = self.load_background(height, width)
+        canvas_rgb = self.load_background(height, width, rng=rng)
         canvas_mask = np.zeros((height, width), dtype=np.int64)
 
         # 1. Sample number of shapes K
@@ -245,9 +268,9 @@ class SyntheticCompositor:
             # Rasterize polygon mask into a binary PIL buffer
             poly_mask_img = Image.new("L", (width, height), 0)
             poly_draw = ImageDraw.Draw(poly_mask_img)
-            # Flatten vertices into [x0, y0, x1, y1, ...]
-            coords = [(float(pt[0]), float(pt[1])) for pt in v_canvas]
-            poly_draw.polygon(coords, fill=255)
+            # Explicit integer casting for pixel-exact rasterization
+            coords = np.round(v_canvas).astype(np.int32)
+            poly_draw.polygon([tuple(pt) for pt in coords], fill=255)
             poly_mask = np.array(poly_mask_img, dtype=bool)
 
             # Synthesize texture for this shape
@@ -291,7 +314,8 @@ class SyntheticCompositor:
         for layer in layer_infos:
             instance_counts[layer.class_id] += 1
             layer.visible_pixels = class_counts.get(layer.class_id, 0)
-            self.sampler.record_placed(layer.class_id, layer.visible_pixels)
+            if track_history:
+                self.sampler.record_placed(layer.class_id, layer.visible_pixels)
 
         fg_pixels = sum(class_counts[cid] for cid in self.registry.get_foreground_class_ids())
         foreground_coverage = float(fg_pixels / total_pixels)

@@ -10,7 +10,7 @@ Generates:
 
 from __future__ import annotations
 from enum import Enum
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 import numpy as np
 from synthetic_seg.config import TextureConfig
 
@@ -27,8 +27,11 @@ class PerlinNoise2D:
     Vectorized 2D Perlin / Gradient Noise synthesizer in pure NumPy.
     """
 
-    def __init__(self, seed: Optional[int] = None) -> None:
-        self.rng = np.random.default_rng(seed)
+    def __init__(self, seed: Optional[Union[int, np.random.Generator, np.random.SeedSequence]] = None) -> None:
+        if isinstance(seed, np.random.Generator):
+            self.rng = seed
+        else:
+            self.rng = np.random.default_rng(seed)
         # Precompute 256 random 2D unit gradient vectors
         angles = self.rng.uniform(0.0, 2 * np.pi, size=256)
         self.gradients = np.column_stack([np.cos(angles), np.sin(angles)])

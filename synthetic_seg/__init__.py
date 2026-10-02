@@ -48,6 +48,14 @@ from synthetic_seg.dataset import (
 
 __version__ = "0.1.0"
 
+
+def __getattr__(name: str):
+    if name in ("generate_dataset", "generate_sample"):
+        from synthetic_seg.generate import generate_dataset, generate_sample
+        mapping = {"generate_dataset": generate_dataset, "generate_sample": generate_sample}
+        return mapping[name]
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
 __all__ = [
     "ClassRegistry",
     "DatasetConfig",
@@ -80,4 +88,6 @@ __all__ = [
     "CompositeResult",
     "StratifiedClassSampler",
     "SyntheticSegmentationDataset",
+    "generate_dataset",
+    "generate_sample",
 ]

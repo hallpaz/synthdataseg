@@ -99,9 +99,12 @@ class SyntheticSegmentationDataset(Dataset):
                     f"Expected 'images' and 'masks' directories inside {base_path}"
                 )
 
-            # Discover image files sorted by filename
+            # Discover image files sorted deterministically by filename
             valid_exts = {".png", ".jpg", ".jpeg"}
-            self.image_files = sorted([p for p in img_dir.iterdir() if p.suffix.lower() in valid_exts])
+            self.image_files = sorted(
+                [p for p in img_dir.iterdir() if p.suffix.lower() in valid_exts],
+                key=lambda p: p.name.lower()
+            )
             self.mask_files = []
 
             for img_p in self.image_files:
@@ -138,13 +141,10 @@ class SyntheticSegmentationDataset(Dataset):
               - target: (H, W) long tensor with class indices in [0, N_max]
         """
         if self.mode in {"on_the_fly", "online"}:
-            # Seed per worker and per item if seed is set
             rng = None
             if self.seed is not None:
-                worker_info = torch.utils.data.get_worker_info()
-                worker_id = worker_info.id if worker_info is not None else 0
-                item_seed = (self.seed + idx * 10007 + worker_id * 99991) & 0xFFFFFFFF
-                rng = np.random.default_rng(item_seed)
+                seed_seq = np.random.SeedSequence(self.seed, spawn_key=(idx,))
+                rng = np.random.default_rng(seed_seq)
 
             result = self.compositor.render(rng=rng)
             image_np = result.image  # (H, W, 3) uint8

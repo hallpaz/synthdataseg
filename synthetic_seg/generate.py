@@ -194,6 +194,35 @@ def plot_balance_histogram(
     plt.close(fig)
 
 
+def generate_sample(
+    idx: int,
+    seed: Optional[int] = 42,
+    config: Optional[DatasetConfig] = None,
+    num_samples: int = 100,
+) -> CompositeResult:
+    """
+    Generate a single composite sample deterministically by index.
+    Matches the sample produced at index `idx` in batch generation with `seed`.
+    """
+    if config is None:
+        config = DatasetConfig()
+
+    registry = ClassRegistry(max_n=config.max_n)
+    compositor = SyntheticCompositor(
+        registry=registry,
+        config=config.compositor,
+        texture_config=config.textures,
+    )
+
+    if seed is not None:
+        child_seed = np.random.SeedSequence(seed).spawn(max(idx + 1, num_samples))[idx]
+        sample_rng = np.random.default_rng(child_seed)
+    else:
+        sample_rng = None
+
+    return compositor.render(rng=sample_rng)
+
+
 def generate_dataset(
     config: DatasetConfig,
     fail_on_imbalance: bool = False,
@@ -207,13 +236,12 @@ def generate_dataset(
 
     registry = ClassRegistry(max_n=config.max_n)
     master_seed = config.generation.seed
-    rng = np.random.default_rng(master_seed)
 
     compositor = SyntheticCompositor(
         registry=registry,
         config=config.compositor,
         texture_config=config.textures,
-        rng=rng,
+        rng=np.random.default_rng(master_seed) if master_seed is not None else None,
     )
 
     total_instances_dataset: Dict[int, int] = {cid: 0 for cid in registry.get_foreground_class_ids()}
@@ -227,7 +255,7 @@ def generate_dataset(
     print(f" Canvas Size: {config.compositor.image_size[0]}x{config.compositor.image_size[1]}")
     print(f"========================================================\n")
 
-    for split_name, count in config.generation.splits.items():
+    for split_idx, (split_name, count) in enumerate(config.generation.splits.items()):
         if count <= 0:
             continue
         print(f"Generating split '{split_name}' ({count} samples)...")
@@ -237,8 +265,19 @@ def generate_dataset(
         img_dir.mkdir(parents=True, exist_ok=True)
         mask_dir.mkdir(parents=True, exist_ok=True)
 
+        # Derive independent, deterministic child seeds for each sample index
+        if master_seed is not None:
+            if split_name == "train":
+                split_seq = np.random.SeedSequence(master_seed)
+            else:
+                split_seq = np.random.SeedSequence(master_seed, spawn_key=(split_idx,))
+            child_seeds = split_seq.spawn(count)
+        else:
+            child_seeds = None
+
         for idx in range(count):
-            result = compositor.render(rng=rng)
+            sample_rng = np.random.default_rng(child_seeds[idx]) if child_seeds is not None else None
+            result = compositor.render(rng=sample_rng)
 
             # Save sample for visual verification if from train or first split
             if len(all_sample_results) < 8:
@@ -384,6 +423,7 @@ def main() -> None:
     parser.add_argument("--tolerance", type=float, default=0.15, help="Balance deviation tolerance threshold")
     parser.add_argument("--fail-on-imbalance", action="store_true", help="Exit with error if tolerance is exceeded")
     parser.add_argument("--artifact-dir", type=str, default="artifacts", help="Directory for verification artifacts")
+    parser.add_argument("--sample-idx", type=int, default=None, help="Generate a single sample standalone by index")
 
     args = parser.parse_args()
 
@@ -407,6 +447,11 @@ def main() -> None:
     cfg.generation.image_size = img_size
     if args.bg_dir:
         cfg.compositor.bg_dir = args.bg_dir
+
+    if args.sample_idx is not None:
+        result = generate_sample(args.sample_idx, seed=cfg.generation.seed, config=cfg)
+        print(f"Sample #{args.sample_idx:05d} generated standalone: {len(result.layers)} shapes, coverage {result.foreground_coverage:.1%}")
+        return
 
     cfg.generation.splits = {
         "train": args.num_train,
