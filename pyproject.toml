@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "synthetic_seg"
+version = "0.1.0"
+description = "Procedural synthetic dataset generator for semantic segmentation"
+readme = "TASK_SPEC.md"
+requires-python = ">=3.9"
+dependencies = [
+    "numpy>=1.24.0",
+    "Pillow>=9.0.0",
+    "scipy>=1.9.0",
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    "matplotlib>=3.6.0",
+    "pyyaml>=6.0",
+]
+
+[project.scripts]
+synth-seg-generate = "synthetic_seg.generate:main"
+
+[tool.setuptools.packages.find]
+include = ["synthetic_seg*"]
