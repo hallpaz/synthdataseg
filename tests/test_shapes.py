@@ -1,1 +1,1 @@
-from synthetic_seg.tests.test_shapes import *
+from synthdataseg.tests.test_shapes import *

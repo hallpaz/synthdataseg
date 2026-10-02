@@ -10,9 +10,9 @@ import torch
 from torch.utils.data import DataLoader
 from PIL import Image
 
-from synthetic_seg.config import ClassRegistry, CompositorConfig, TextureConfig
-from synthetic_seg.dataset import SyntheticSegmentationDataset
-from synthetic_seg.compositor import SyntheticCompositor
+from synthdataseg.config import ClassRegistry, CompositorConfig, TextureConfig
+from synthdataseg.dataset import SyntheticSegmentationDataset
+from synthdataseg.compositor import SyntheticCompositor
 
 
 def test_on_the_fly_dataset_and_mask_bounds():

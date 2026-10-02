@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "synthetic_seg"
+name = "synthdataseg"
 version = "0.1.0"
 description = "Procedural synthetic dataset generator for semantic segmentation"
 readme = "TASK_SPEC.md"
@@ -19,7 +19,7 @@ dependencies = [
 ]
 
 [project.scripts]
-synth-seg-generate = "synthetic_seg.generate:main"
+synth-seg-generate = "synthdataseg.generate:main"
 
 [tool.setuptools.packages.find]
-include = ["synthetic_seg*"]
+include = ["synthdataseg*"]

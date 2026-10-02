@@ -2,7 +2,7 @@
 
 ## 1. Executive Summary & Objective
 
-This project implements a modular, high-performance Python package (`synthetic_seg`) and command-line interface (`generate.py`) for procedurally generating synthetic semantic segmentation datasets. It composites mathematically defined, procedurally textured, geometrically transformed 2D vector shapes onto real (or synthetic procedural) backgrounds, outputting paired RGB images and ground truth integer segmentation masks, along with a full PyTorch `Dataset` implementation supporting both dynamic in-memory generation and disk-backed loading.
+This project implements a modular, high-performance Python package (`synthdataseg`) and command-line interface (`generate.py`) for procedurally generating synthetic semantic segmentation datasets. It composites mathematically defined, procedurally textured, geometrically transformed 2D vector shapes onto real (or synthetic procedural) backgrounds, outputting paired RGB images and ground truth integer segmentation masks, along with a full PyTorch `Dataset` implementation supporting both dynamic in-memory generation and disk-backed loading.
 
 ---
 
@@ -12,7 +12,7 @@ This project implements a modular, high-performance Python package (`synthetic_s
 synth-segmentation/
 ├── prompt.md
 ├── TASK_SPEC.md
-├── synthetic_seg/
+├── synthdataseg/
 │   ├── __init__.py
 │   ├── config.py             # Dataclasses, ClassRegistry, YAML configuration loader
 │   ├── shapes.py             # Vector geometry generators (Convex N-gons via Valtr's algorithm, Star, Basquiat Crown)

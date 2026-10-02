@@ -15,10 +15,10 @@ from typing import Dict, List, Optional, Tuple, Any
 import numpy as np
 from PIL import Image, ImageDraw
 
-from synthetic_seg.config import ClassRegistry, CompositorConfig, TextureConfig
-from synthetic_seg.shapes import generate_shape, polygon_area
-from synthetic_seg.textures import generate_texture, PerlinNoise2D
-from synthetic_seg.transforms import sample_affine_transform, apply_affine_transform
+from synthdataseg.config import ClassRegistry, CompositorConfig, TextureConfig
+from synthdataseg.shapes import generate_shape, polygon_area
+from synthdataseg.textures import generate_texture, PerlinNoise2D
+from synthdataseg.transforms import sample_affine_transform, apply_affine_transform
 
 
 @dataclass

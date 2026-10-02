@@ -1,8 +1,8 @@
 """
-synthetic_seg: Procedural Synthetic Dataset Generator for Semantic Segmentation.
+synthdataseg: Procedural Synthetic Dataset Generator for Semantic Segmentation.
 """
 
-from synthetic_seg.config import (
+from synthdataseg.config import (
     ClassRegistry,
     DatasetConfig,
     ShapeConfig,
@@ -13,7 +13,7 @@ from synthetic_seg.config import (
     load_config,
     save_config,
 )
-from synthetic_seg.shapes import (
+from synthdataseg.shapes import (
     generate_shape,
     generate_convex_ngon,
     generate_star,
@@ -23,7 +23,7 @@ from synthetic_seg.shapes import (
     normalize_polygon_area,
     is_simple_polygon,
 )
-from synthetic_seg.textures import (
+from synthdataseg.textures import (
     generate_texture,
     generate_plain_texture,
     generate_wood_texture,
@@ -31,18 +31,18 @@ from synthetic_seg.textures import (
     generate_fur_texture,
     TextureType,
 )
-from synthetic_seg.transforms import (
+from synthdataseg.transforms import (
     AffineTransform,
     compute_affine_matrix,
     apply_affine_transform,
     compute_area_normalized_scaling,
 )
-from synthetic_seg.compositor import (
+from synthdataseg.compositor import (
     SyntheticCompositor,
     CompositeResult,
     StratifiedClassSampler,
 )
-from synthetic_seg.dataset import (
+from synthdataseg.dataset import (
     SyntheticSegmentationDataset,
 )
 
@@ -51,7 +51,7 @@ __version__ = "0.1.0"
 
 def __getattr__(name: str):
     if name in ("generate_dataset", "generate_sample"):
-        from synthetic_seg.generate import generate_dataset, generate_sample
+        from synthdataseg.generate import generate_dataset, generate_sample
         mapping = {"generate_dataset": generate_dataset, "generate_sample": generate_sample}
         return mapping[name]
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")

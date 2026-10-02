@@ -14,8 +14,8 @@ import torch
 from torch.utils.data import Dataset
 from PIL import Image
 
-from synthetic_seg.config import ClassRegistry, CompositorConfig, TextureConfig
-from synthetic_seg.compositor import SyntheticCompositor
+from synthdataseg.config import ClassRegistry, CompositorConfig, TextureConfig
+from synthdataseg.compositor import SyntheticCompositor
 
 
 # Standard ImageNet normalization statistics
@@ -45,6 +45,9 @@ class SyntheticSegmentationDataset(Dataset):
         transform: Optional[Callable] = None,
         target_transform: Optional[Callable] = None,
         seed: Optional[int] = None,
+        num_samples: Optional[int] = None,
+        image_size: Optional[Tuple[int, int]] = None,
+        max_n: Optional[int] = None,
     ) -> None:
         """
         Initialize the dataset.
@@ -61,10 +64,25 @@ class SyntheticSegmentationDataset(Dataset):
             transform: Optional transformation for image tensor.
             target_transform: Optional transformation for mask tensor.
             seed: Optional seed for reproducible generation.
+            num_samples: Alias for length.
+            image_size: Convenience tuple (H, W) to configure canvas size.
+            max_n: Convenience integer to configure max N-gon class in ClassRegistry.
         """
         self.mode = mode.lower()
         if self.mode not in {"on_the_fly", "online", "disk", "disk_backed"}:
             raise ValueError(f"Invalid mode: '{mode}'. Must be 'on_the_fly' or 'disk'.")
+
+        if num_samples is not None:
+            length = num_samples
+
+        if registry is None and max_n is not None:
+            registry = ClassRegistry(max_n=max_n)
+
+        if image_size is not None:
+            if compositor_config is None:
+                compositor_config = CompositorConfig(image_size=image_size)
+            else:
+                compositor_config.image_size = image_size
 
         self.length = length
         self.normalize_mode = normalize_mode

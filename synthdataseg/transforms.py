@@ -12,7 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional, Tuple
 import numpy as np
-from synthetic_seg.shapes import polygon_area, center_polygon
+from synthdataseg.shapes import polygon_area, center_polygon
 
 
 @dataclass

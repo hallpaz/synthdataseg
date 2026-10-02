@@ -5,8 +5,8 @@ Unit tests for vector shape validity, convexity, area normalization, and class r
 import numpy as np
 import pytest
 
-from synthetic_seg.config import ClassRegistry
-from synthetic_seg.shapes import (
+from synthdataseg.config import ClassRegistry
+from synthdataseg.shapes import (
     generate_shape,
     generate_star,
     generate_basquiat_crown,
@@ -17,7 +17,7 @@ from synthetic_seg.shapes import (
     is_convex_polygon,
     normalize_polygon_area,
 )
-from synthetic_seg.transforms import (
+from synthdataseg.transforms import (
     sample_affine_transform,
     apply_affine_transform,
     compute_affine_matrix,

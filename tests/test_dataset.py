@@ -1,1 +1,1 @@
-from synthetic_seg.tests.test_dataset import *
+from synthdataseg.tests.test_dataset import *

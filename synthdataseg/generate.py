@@ -22,14 +22,14 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from synthetic_seg.config import (
+from synthdataseg.config import (
     ClassRegistry,
     DatasetConfig,
     GenerationConfig,
     CompositorConfig,
     load_config,
 )
-from synthetic_seg.compositor import SyntheticCompositor, CompositeResult
+from synthdataseg.compositor import SyntheticCompositor, CompositeResult
 
 
 def create_verification_grid(

@@ -8,10 +8,10 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from synthetic_seg.config import ClassRegistry, CompositorConfig, DatasetConfig
-from synthetic_seg.compositor import SyntheticCompositor
-from synthetic_seg.dataset import SyntheticSegmentationDataset
-from synthetic_seg.generate import generate_dataset, generate_sample
+from synthdataseg.config import ClassRegistry, CompositorConfig, DatasetConfig
+from synthdataseg.compositor import SyntheticCompositor
+from synthdataseg.dataset import SyntheticSegmentationDataset
+from synthdataseg.generate import generate_dataset, generate_sample
 
 
 def test_reproducibility_run1_vs_run2():

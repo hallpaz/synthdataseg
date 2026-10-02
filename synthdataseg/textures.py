@@ -12,7 +12,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Optional, Tuple, Union
 import numpy as np
-from synthetic_seg.config import TextureConfig
+from synthdataseg.config import TextureConfig
 
 
 class TextureType(str, Enum):
