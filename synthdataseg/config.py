@@ -173,18 +173,12 @@ class TransformConfig:
 class CompositorConfig:
     """Configuration for multi-shape canvas compositing."""
     image_size: Tuple[int, int] = (256, 256)
-    min_shapes: int = 2
+    min_shapes: int = 1
     max_shapes: int = 5
-    target_coverage_min: float = 0.20
+    target_coverage_min: float = 0.10
     target_coverage_max: float = 0.45
     bg_dir: Optional[str] = None
     stratified_sampling: bool = True
-    target_foreground_coverage: Optional[Tuple[float, float]] = None
-
-    def __post_init__(self) -> None:
-        if self.target_foreground_coverage is not None:
-            self.target_coverage_min = float(self.target_foreground_coverage[0])
-            self.target_coverage_max = float(self.target_foreground_coverage[1])
 
 
 @dataclass

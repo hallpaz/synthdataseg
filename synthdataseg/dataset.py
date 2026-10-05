@@ -39,6 +39,8 @@ class SyntheticSegmentationDataset(Dataset):
         data_dir: Optional[Union[str, Path]] = None,
         split: Optional[str] = None,
         normalize_mode: str = "unit",  # "unit" for [0, 1], "imagenet" for ImageNet normalization
+        min_shapes: Optional[int] = None,
+        max_shapes: Optional[int] = None,
         registry: Optional[ClassRegistry] = None,
         compositor_config: Optional[CompositorConfig] = None,
         texture_config: Optional[TextureConfig] = None,
@@ -83,6 +85,10 @@ class SyntheticSegmentationDataset(Dataset):
                 compositor_config = CompositorConfig(image_size=image_size)
             else:
                 compositor_config.image_size = image_size
+        if min_shapes is not None:
+            compositor_config.min_shapes = min_shapes
+        if max_shapes is not None:
+            compositor_config.max_shapes = max_shapes
 
         self.length = length
         self.normalize_mode = normalize_mode
